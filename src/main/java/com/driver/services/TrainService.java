@@ -125,7 +125,7 @@ public class TrainService {
                 if(Objects.equals(ans[i], String.valueOf(station))){
                     int startHour = startTime.getHour();
                     int lastHour = endTime.getHour();
-                    if(i>=startHour && i<=lastHour)
+                    if(i>startHour && i<lastHour)
                         TrainList.add(t.getTrainId());
                 }
             }
