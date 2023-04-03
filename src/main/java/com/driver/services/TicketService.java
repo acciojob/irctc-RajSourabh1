@@ -48,54 +48,51 @@ public class TicketService {
        //And the end return the ticketId that has come from db
 
         Train train = trainRepository.findById(bookTicketEntryDto.getTrainId()).get();
+
         String s = train.getRoute();
-        int count =0, startStationIndex = 0, endStationIndex = 0;
+        int count =0;
         String[] list = s.split(",");
-        for (int i=0;i<list.length;i++) {
-            if (list[i] == String.valueOf(bookTicketEntryDto.getFromStation())) {
+        for (String value : list) {
+            if (value == String.valueOf(bookTicketEntryDto.getFromStation()))
                 count++;
-                startStationIndex = i+1;
-            }
-            if (list[i] == String.valueOf(bookTicketEntryDto.getToStation())) {
+            if (value == String.valueOf(bookTicketEntryDto.getToStation())) {
                 count++;
-                endStationIndex=i+1;
             }
-        }
-        if(count!=2)
-            throw new Exception("Invalid stations");
-        else {
-
-            SeatAvailabilityEntryDto isAvailable = new SeatAvailabilityEntryDto();
-            isAvailable.setTrainId(bookTicketEntryDto.getTrainId());
-            isAvailable.setFromStation(bookTicketEntryDto.getFromStation());
-            isAvailable.setToStation(bookTicketEntryDto.getToStation());
-
-            int availableSeats = trainService.calculateAvailableSeats(isAvailable);
-            if (bookTicketEntryDto.getNoOfSeats() > availableSeats)
-                throw new Exception("Less tickets are available");
+            if (count != 2)
+                throw new Exception("Invalid stations");
             else {
 
-                List<Integer> passengerIds = bookTicketEntryDto.getPassengerIds();
-                List<Passenger> passengers = new ArrayList<>();
+                SeatAvailabilityEntryDto isAvailable = new SeatAvailabilityEntryDto();
+                isAvailable.setTrainId(bookTicketEntryDto.getTrainId());
+                isAvailable.setFromStation(bookTicketEntryDto.getFromStation());
+                isAvailable.setToStation(bookTicketEntryDto.getToStation());
 
-                Ticket ticket = new Ticket();
+                int availableSeats = trainService.calculateAvailableSeats(isAvailable);
+                if (bookTicketEntryDto.getNoOfSeats() > availableSeats)
+                    throw new Exception("Less tickets are available");
+                else {
 
-                for(int id:passengerIds){
-                    Passenger passenger = passengerRepository.findById(id).get();
-                   // passenger.get
-                    passengers.add(passenger);
+                    List<Integer> passengerIds = bookTicketEntryDto.getPassengerIds();
+                    List<Passenger> passengers = new ArrayList<>();
+
+                    Ticket ticket = new Ticket();
+
+                    for (int id : passengerIds) {
+                        Passenger passenger = passengerRepository.findById(id).get();
+                        // passenger.get
+                        passengers.add(passenger);
+                    }
+
+                    int fare = (endStationIndex - startStationIndex) * 300 * passengers.size();
+
+                    ticket.setFromStation(bookTicketEntryDto.getFromStation());
+                    ticket.setToStation(bookTicketEntryDto.getToStation());
+                    ticket.setPassengersList(passengers);
+                    ticket.setTotalFare(fare);
+                    ticket.setTrain(train);
+
+                    return ticketRepository.save(ticket).getTicketId();
                 }
-
-                int fare = (endStationIndex - startStationIndex) * 300 * passengers.size();
-
-                ticket.setFromStation(bookTicketEntryDto.getFromStation());
-                ticket.setToStation(bookTicketEntryDto.getToStation());
-                ticket.setPassengersList(passengers);
-                ticket.setTotalFare(fare);
-                ticket.setTrain(train);
-
-                return ticketRepository.save(ticket).getTicketId();
             }
         }
-    }
 }
